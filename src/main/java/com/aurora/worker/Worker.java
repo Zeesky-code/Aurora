@@ -2,6 +2,8 @@ package com.aurora.worker;
 
 import com.aurora.core.config.AuroraConfig;
 import com.aurora.core.exception.AuroraException;
+import com.aurora.core.handler.DataProcessingTaskHandler;
+import com.aurora.core.handler.TaskHandlerRegistry;
 import com.aurora.core.model.*;
 import com.aurora.metrics.MetricsCollector;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -25,6 +27,7 @@ public class Worker {
     private final BlockingQueue<Task> taskQueue;
     private final TaskProcessor taskProcessor;
     private final MetricsCollector metricsCollector;
+    private final TaskHandlerRegistry taskHandlerRegistry;
     private volatile boolean isRunning;
 
     public Worker(String workerId, String zkConnectString, MeterRegistry meterRegistry) {
@@ -42,6 +45,9 @@ public class Worker {
                 (t1, t2) -> t2.getPriority().getValue() - t1.getPriority().getValue()
         );
         this.metricsCollector = new MetricsCollector(meterRegistry);
+        this.taskHandlerRegistry = new TaskHandlerRegistry();
+        this.taskHandlerRegistry.registerHandler("data-processing", new DataProcessingTaskHandler());
+
         this.taskProcessor = new TaskProcessor(curator, taskQueue,metricsCollector);
     }
 

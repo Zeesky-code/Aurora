@@ -2,6 +2,7 @@ package com.aurora.worker;
 
 import com.aurora.core.config.AuroraConfig;
 import com.aurora.core.exception.AuroraException;
+import com.aurora.core.handler.TaskHandlerRegistry;
 import com.aurora.core.model.*;
 import com.aurora.metrics.MetricsCollector;
 import org.apache.curator.framework.CuratorFramework;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 public class TaskProcessor {
     private static final Logger logger = LoggerFactory.getLogger(TaskProcessor.class);
+    private final TaskHandlerRegistry taskHandlerRegistry= new TaskHandlerRegistry();
     private final MetricsCollector metricsCollector;
     private final CuratorFramework curator;
     private final BlockingQueue<Task> taskQueue;
@@ -80,6 +82,28 @@ public class TaskProcessor {
             }
         } catch (Exception ex) {
             throw new AuroraException("Failed to process task", e);
+        }
+    }
+
+    private void executeTask(Task task) throws Exception {
+        // Get task handler based on task type
+        TaskHandler handler = taskHandlerRegistry.getHandler(task.getName());
+        if (handler == null) {
+            throw new AuroraException("No handler found for task type: " + task.getName());
+        }
+        TaskExecutionContext context = new TaskExecutionContext(
+                task,
+                metricsCollector
+        );
+
+        // Execute with timeout
+        try {
+            CompletableFuture.supplyAsync(() -> {
+                return handler.execute(context);
+            }).get(2, TimeUnit.SECONDS);
+
+        } catch (TimeoutException e) {
+            throw new AuroraException("Task execution timed out", e);
         }
     }
 }
