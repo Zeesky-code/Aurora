@@ -1,8 +1,8 @@
 package com.aurora.worker;
 
 import com.aurora.core.config.AuroraConfig;
-import com.aurora.core.exception.AuroraException;
 import com.aurora.core.model.*;
+import com.aurora.metrics.MetricsCollector;
 import org.apache.curator.framework.CuratorFramework;
 
 import java.time.Instant;
@@ -17,6 +17,7 @@ public class TaskProcessor {
     private final BlockingQueue<Task> taskQueue;
     private final ExecutorService executorService;
     private volatile boolean isRunning;
+    private final MetricsCollector metrics = new MetricsCollector();
 
     public TaskProcessor(CuratorFramework curator, BlockingQueue<Task> taskQueue) {
         this.curator = curator;
@@ -66,5 +67,6 @@ public class TaskProcessor {
                 task.getAssignedWorker()
         );
         task.getStatusHistory().add(statusChange);
+        //metricsCollector.recordStatusChange(task, newStatus);
     }
 }
