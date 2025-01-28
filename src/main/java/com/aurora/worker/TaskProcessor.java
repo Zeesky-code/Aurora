@@ -1,6 +1,7 @@
 package com.aurora.worker;
 
 import com.aurora.core.config.AuroraConfig;
+import com.aurora.core.exception.AuroraException;
 import com.aurora.core.model.*;
 import com.aurora.metrics.MetricsCollector;
 import org.apache.curator.framework.CuratorFramework;
@@ -52,15 +53,13 @@ public class TaskProcessor {
             //executeTask(task);
             updateTaskStatus(task, TaskStatus.COMPLETED);
         } catch (Exception e) {
-            //handleTaskFailure(task, e);
-            System.out.println("Task Update failed");
+            handleTaskFailure(task, e);
         }
     }
     private void updateTaskStatus(Task task, TaskStatus newStatus) throws Exception {
         String taskPath = "/aurora/tasks/" + task.getId();
         task.setStatus(newStatus);
 
-        // Add status change timestamp
         TaskStatusChange statusChange = new TaskStatusChange(
                 newStatus,
                 Instant.now(),
@@ -68,5 +67,19 @@ public class TaskProcessor {
         );
         task.getStatusHistory().add(statusChange);
         //metricsCollector.recordStatusChange(task, newStatus);
+    }
+
+    private void handleTaskFailure(Task task, Exception e) {
+        try {
+            if (task.getRetryCount() < 3) {
+                task.setRetryCount(task.getRetryCount() + 1);
+                taskQueue.put(task);
+            } else {
+                updateTaskStatus(task, TaskStatus.FAILED);
+                //metricsCollector.recordStatusChange(task, newStatus);
+            }
+        } catch (Exception ex) {
+            throw new AuroraException("Failed to process task", e);
+        }
     }
 }
