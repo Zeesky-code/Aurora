@@ -1,6 +1,7 @@
 package com.aurora.core.model;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -16,6 +17,7 @@ public class Task {
     private int retryCount;
     private int maxRetries;
     private String assignedWorker;
+    private ArrayList<TaskStatusChange> statusHistory;
 
     public Task() {
         this.id = UUID.randomUUID().toString();
@@ -36,9 +38,6 @@ public class Task {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
 
     public String getPayload() {
         return payload;
@@ -68,10 +67,6 @@ public class Task {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public Instant getScheduledFor() {
         return scheduledFor;
     }
@@ -92,10 +87,6 @@ public class Task {
         return maxRetries;
     }
 
-    public void setMaxRetries(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
-
     public String getAssignedWorker() {
         return assignedWorker;
     }
@@ -103,4 +94,9 @@ public class Task {
     public void setAssignedWorker(String assignedWorker) {
         this.assignedWorker = assignedWorker;
     }
+
+    public ArrayList<TaskStatusChange> getStatusHistory() {
+        return statusHistory;
+    }
+
 }

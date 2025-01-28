@@ -47,13 +47,24 @@ public class TaskProcessor {
 
     private void processTask(Task task) {
         try {
-            //updateTaskStatus(task, TaskStatus.RUNNING);
+            updateTaskStatus(task, TaskStatus.RUNNING);
             //executeTask(task);
-            //updateTaskStatus(task, TaskStatus.COMPLETED);
+            updateTaskStatus(task, TaskStatus.COMPLETED);
         } catch (Exception e) {
             //handleTaskFailure(task, e);
             System.out.println("Task Update failed");
         }
     }
+    private void updateTaskStatus(Task task, TaskStatus newStatus) throws Exception {
+        String taskPath = "/aurora/tasks/" + task.getId();
+        task.setStatus(newStatus);
 
+        // Add status change timestamp
+        TaskStatusChange statusChange = new TaskStatusChange(
+                newStatus,
+                Instant.now(),
+                task.getAssignedWorker()
+        );
+        task.getStatusHistory().add(statusChange);
+    }
 }
