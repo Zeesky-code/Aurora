@@ -24,6 +24,7 @@ public class Task {
         this.createdAt = Instant.now();
         this.status = TaskStatus.CREATED;
         this.maxRetries = 3;
+        this.statusHistory = new ArrayList<>();
     }
 
     public String getName() {

@@ -17,7 +17,7 @@ public class TaskProcessor {
     private final BlockingQueue<Task> taskQueue;
     private final ExecutorService executorService;
     private volatile boolean isRunning;
-    private final MetricsCollector metrics = new MetricsCollector();
+    //private final MetricsCollector metrics = new MetricsCollector();
 
     public TaskProcessor(CuratorFramework curator, BlockingQueue<Task> taskQueue) {
         this.curator = curator;
