@@ -13,19 +13,19 @@ import org.slf4j.LoggerFactory;
 
 public class TaskProcessor {
     private static final Logger logger = LoggerFactory.getLogger(TaskProcessor.class);
-
+    private final MetricsCollector metricsCollector;
     private final CuratorFramework curator;
     private final BlockingQueue<Task> taskQueue;
     private final ExecutorService executorService;
     private volatile boolean isRunning;
-    //private final MetricsCollector metrics = new MetricsCollector();
 
-    public TaskProcessor(CuratorFramework curator, BlockingQueue<Task> taskQueue) {
+    public TaskProcessor(CuratorFramework curator, BlockingQueue<Task> taskQueue, MetricsCollector metricsCollector) {
         this.curator = curator;
         this.taskQueue = taskQueue;
         this.executorService = Executors.newFixedThreadPool(
                 AuroraConfig.getWorkerThreads()
         );
+        this.metricsCollector = metricsCollector;
     }
 
     public void start() {
@@ -52,6 +52,7 @@ public class TaskProcessor {
             updateTaskStatus(task, TaskStatus.RUNNING);
             //executeTask(task);
             updateTaskStatus(task, TaskStatus.COMPLETED);
+            metricsCollector.recordTaskCompletion(task);
         } catch (Exception e) {
             handleTaskFailure(task, e);
         }
@@ -66,7 +67,6 @@ public class TaskProcessor {
                 task.getAssignedWorker()
         );
         task.getStatusHistory().add(statusChange);
-        //metricsCollector.recordStatusChange(task, newStatus);
     }
 
     private void handleTaskFailure(Task task, Exception e) {
@@ -76,7 +76,7 @@ public class TaskProcessor {
                 taskQueue.put(task);
             } else {
                 updateTaskStatus(task, TaskStatus.FAILED);
-                //metricsCollector.recordStatusChange(task, newStatus);
+                metricsCollector.recordTaskFailure(task);
             }
         } catch (Exception ex) {
             throw new AuroraException("Failed to process task", e);
