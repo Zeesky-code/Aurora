@@ -27,9 +27,13 @@ public class MetricsCollector {
     public void recordTaskCompletion(Task task) {
         taskCompletedCounter.increment();
     }
+
     public void recordTaskFailure(Task task) {
         taskFailedCounter.increment();
     }
 
+    public Timer getTaskExecutionTimer() {
+        return taskExecutionTimer;
+    }
 
 }
